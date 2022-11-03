@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View , ScrollView, Image } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View , ScrollView } from 'react-native';
 import ClassificationTable from './screens/ClassificationTable';
 import soccerService from './services/SoccerService'
 
@@ -9,28 +9,28 @@ export default function App() {
 	const [matches, setMatches] = useState([]);
 	const [name, setName] = useState(undefined);
 	const [clubs, setClubs] = useState([]);
-	const [temporadaEscolhida, setTemporadaEscolhida] = useState(2019); 
+	let isCampeonatoBrasileiro = false;
+	const [temporadaEscolhida, setTemporadaEscolhida] = useState(isCampeonatoBrasileiro ? 2019 : '2016-17'); 
 
-	useEffect(() => {
-		searchMatches(temporadaEscolhida);
-		searchClubs(temporadaEscolhida);
-	}, [])
-
-	function searchMatches(temporadaEscolhida){
-		soccerService.searchMatches(temporadaEscolhida, 'br').then((response)=>{
-			setMatches(response["matches"]);
+	function searchMatches(temporadaEscolhida){ 
+		soccerService.searchMatches(temporadaEscolhida, 'en').then((response)=>{
+			if(isCampeonatoBrasileiro){
+				setMatches(response["matches"]);
+			} else {
+				setMatches(response["rounds"]);
+			}
 			setName(response["name"]);
-		},(error)=>{})
+		},(error)=>{
+			alert('Deu ruim na busca por jogos chefia: ', error);
+		})
 	}
 
 	function searchClubs(temporadaEscolhida){ 
-		soccerService.searchClubs(temporadaEscolhida, 'br').then((response)=>{
+		soccerService.searchClubs(temporadaEscolhida, 'en').then((response)=>{
 			setClubs(response["clubs"]);
-		},(error)=>{})
-	}
-
-	function elementImage (value) {
-		return <Image style={{width: 25, height: 25}} source={require('./imgs/sao-paulo.png')}/>
+		},(error)=>{
+			alert('Deu ruim na busca por times chefia: ', error);
+		})
 	}
     
 	return (
@@ -42,8 +42,8 @@ export default function App() {
 							 clubs={clubs}
 							 searchClubs={searchClubs}
 							 temporadaEscolhida={temporadaEscolhida}
-							 setTemporadaEscolhida={setTemporadaEscolhida}
 							 searchMatches={searchMatches}
+							 isCampeonatoBrasileiro={isCampeonatoBrasileiro}
 						     styles={styles}/>
      	</ScrollView>
     </View>
@@ -53,8 +53,7 @@ export default function App() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		padding: 15,
-		paddingTop: 60,
+		paddingTop: 50,
 	},
 	head: {  
 		height: 40, 
@@ -65,7 +64,30 @@ const styles = StyleSheet.create({
 	},
 	title: { 
 		flex: 1, 
-		backgroundColor: '#f6f8fa',
+		padding: 2,
+		fontSize: 26,
+		paddingBottom: 5,
+		textAlign: 'center',
+		backgroundColor: '#145A32',
+		color: '#FDFEFE'
+	},
+	selectSeasonTitle: { 
+		textAlign: 'center',
+		backgroundColor: '#145A32',
+		color: '#FDFEFE'
+	},
+	selectRoundTitle: { 
+		textAlign: 'center',
+		backgroundColor: '#145A32',
+		color: '#FDFEFE'
+	},
+	seasonAndRoundTitle: { 
+		flex: 1, 
+		padding: 2,
+		backgroundColor: '#145A32',
+		color: '#FDFEFE',
+		display:'flex', 
+		flexDirection:'row',
 	},
 	row: {  
 		height: 28,  
@@ -75,13 +97,24 @@ const styles = StyleSheet.create({
 	},
 	selectSeason: {
 		height: '100%', 
-		width : '20%', 
+		width : '35%', 
 		alignItems: 'center',
-		marginLeft: 100
+		backgroundColor: '#FFF',
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: '#444',
+		marginLeft: 50
 	},
 	selectRound: {
 		height: '100%', 
 		width : '20%', 
-		alignItems: 'center'
+		alignItems: 'center',
+		backgroundColor: '#FFF',
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: '#444',
+	},
+	dropdown1DropdownStyle: {
+		backgroundColor: '#EFEFEF'
 	},
 });

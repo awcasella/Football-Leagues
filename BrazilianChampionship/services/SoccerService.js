@@ -1,7 +1,5 @@
 /**
- * Faça requests ao servidor por escalações com este serviço.
- *
- * @since 3.0
+ * You can make requests to the server to search for teams, matches and rounds with this service.
  */
 class SoccerService {
 

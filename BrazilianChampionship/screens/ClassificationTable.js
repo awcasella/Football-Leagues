@@ -1,13 +1,14 @@
 import { Row, Rows, Table, TableWrapper } from "react-native-table-component";
-import { Text, Image, View } from 'react-native';
+import { Text, Image, View, ScrollView } from 'react-native';
 import { useEffect, useState } from "react";
 import SelectDropdown from 'react-native-select-dropdown'
 import reactUtils from "../services/ReactUtils";
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-export default function ClassificationTable({matches, clubs, searchClubs, name, temporadaEscolhida, setTemporadaEscolhida, searchMatches, styles}) {
+export default function ClassificationTable({matches, clubs, searchClubs, name, temporadaEscolhida, searchMatches, styles, isCampeonatoBrasileiro}) {
 
     const numberOfRounds = 2 * (clubs.length - 1); // If there is 20 clubs, then there is 38 rounds.
-    const allSeasons = reactUtils.range(2019, 2020, 1);
+    const allSeasons = isCampeonatoBrasileiro ? reactUtils.range(2019, 2020, 1) : reactUtils.rangeMidSeason(2004, 2020, 1);
     const allRounds = reactUtils.range(1, numberOfRounds, 1);
 
     const tableHead = ['Pos', undefined ,'Time', 'Pts', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG'];   
@@ -17,9 +18,16 @@ export default function ClassificationTable({matches, clubs, searchClubs, name, 
 
     // useEffect with a empty list as 2nd arg works like a "constructor"
     useEffect(() => {
-        onUpdateTableWithSeason(2019);
-    }, []);
-    
+        
+        searchClubs(temporadaEscolhida);
+		searchMatches(temporadaEscolhida);
+		
+        setRodadaEscolhida(2 * (clubs.length - 1));
+        
+        onUpdateTableWithSeason(temporadaEscolhida);
+        onUpdateTable(2 * (clubs.length - 1));
+	}, [])
+
     function buildClassificationTable(){
         let tabelaInicializada = [];
         clubs.forEach((club, index) => {
@@ -44,7 +52,14 @@ export default function ClassificationTable({matches, clubs, searchClubs, name, 
             return;
         }
         for(let rodada = 1; rodada <= round; rodada++){
-            let jogosRodadaN = matches.filter(match => match.round === "Rodada " + rodada );
+            let jogosRodadaN = [];
+            
+            if(isCampeonatoBrasileiro){
+                jogosRodadaN = matches.filter(match => match.round === "Rodada " + rodada );
+            } else {
+                jogosRodadaN = matches.filter(match => match.name === "Matchday " + rodada )[0].matches;
+            }
+            
             jogosRodadaN.forEach(jogo => {
                 let placarMandate = jogo.score.ft[0];
                 let placarVisitante = jogo.score.ft[1];
@@ -109,63 +124,79 @@ export default function ClassificationTable({matches, clubs, searchClubs, name, 
     function onUpdateTableWithSeason(temporadaSelecionada){
         searchMatches(temporadaSelecionada);
         searchClubs(temporadaSelecionada);
-        onUpdateTable(rodadaEscolhida);
+        
+        onUpdateTable(numberOfRounds);
     }
 
     function onUpdateTable(rodadaSelecionada){
+        setRodadaEscolhida(rodadaSelecionada);
         let tabelaInicializada = buildClassificationTable();
         let tabelaAtualizada = updateClassificationTableUntilNthRound(rodadaSelecionada, tabelaInicializada);
         jsonArray2Table(tabelaAtualizada);
     }
 
     return <View>
-        <Text>{name}</Text>
-        <View style={{display:'flex', flexDirection:'row'}}>
-            {/* Select season */}
-            <Text>Temporada: </Text>
-            <SelectDropdown buttonStyle={styles.selectSeason}
-                data={allSeasons}
-                onSelect={onUpdateTableWithSeason}
-                defaultButtonText={temporadaEscolhida}
-                buttonTextAfterSelection={(selectedItem, index) => {
-                    // text represented after item is selected
-                    // if data array is an array of objects then return selectedItem.property to render after item is selected
-                    return selectedItem
-                }}
-                rowTextForSelection={(item, index) => {
-                    // text represented for each item in dropdown
-                    // if data array is an array of objects then return item.property to represent item in dropdown
-                    return item
-                }}
-            />
+        <ScrollView>
+            <Text style={styles.title}>{name}</Text>
+            <View style={styles.seasonAndRoundTitle}>
+                {/* Select season */}
+                <Text style={styles.selectSeasonTitle}>Temporada: </Text>
+                <SelectDropdown buttonStyle={styles.selectSeason}
+                    data={allSeasons}
+                    onSelect={onUpdateTableWithSeason}
+                    defaultButtonText={temporadaEscolhida}
+                    buttonTextAfterSelection={(selectedItem, index) => {
+                        // text represented after item is selected
+                        // if data array is an array of objects then return selectedItem.property to render after item is selected
+                        return selectedItem
+                    }}
+                    rowTextForSelection={(item, index) => {
+                        // text represented for each item in dropdown
+                        // if data array is an array of objects then return item.property to represent item in dropdown
+                        return item
+                    }}
+                    renderDropdownIcon={isOpened => {
+                        return <FontAwesome name={isOpened ? 'chevron-up' : 'chevron-down'} color={'#444'} size={18} />;
+                    }}
+                    dropdownIconPosition={'right'}
+                    dropdownStyle={styles.dropdown1DropdownStyle}
+                />
 
-            {/* Select round */}
-            <Text>Rodada: </Text>
-            <SelectDropdown buttonStyle={styles.selectRound}
-                data={allRounds}
-                onSelect={onUpdateTable}
-                defaultButtonText={numberOfRounds}
-                buttonTextAfterSelection={(selectedItem, index) => {
-                    // text represented after item is selected
-                    // if data array is an array of objects then return selectedItem.property to render after item is selected
-                    return selectedItem
-                }}
-                rowTextForSelection={(item, index) => {
-                    // text represented for each item in dropdown
-                    // if data array is an array of objects then return item.property to represent item in dropdown
-                    return item
-                }}
-            />
-        </View>
+                {/* Select round */}
+                <Text style={styles.selectRoundTitle}>Rodada: </Text>
+                <SelectDropdown buttonStyle={styles.selectRound}
+                    data={allRounds}
+                    onSelect={onUpdateTable}
+                    defaultValue={numberOfRounds}
+                    buttonTextAfterSelection={(selectedItem, index) => {
+                        // text represented after item is selected
+                        // if data array is an array of objects then return selectedItem.property to render after item is selected
+                        return selectedItem
+                    }}
+                    rowTextForSelection={(item, index) => {
+                        // text represented for each item in dropdown
+                        // if data array is an array of objects then return item.property to represent item in dropdown
+                        return item
+                    }}
+                    renderDropdownIcon={isOpened => {
+                        return <FontAwesome name={isOpened ? 'chevron-up' : 'chevron-down'} color={'#444'} size={18} />;
+                    }}
+                    
+                    buttonTextStyle={styles.dropdown2BtnTxtStyle}
+                    dropdownIconPosition={'right'}
+                    dropdownStyle={styles.dropdown1DropdownStyle}
+                />
+            </View>
 
-        {/* Classification table */}
-        <Table borderStyle={{ borderWidth: 0 }}>
-            
-            {/* <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} /> */}
-            <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} />
-            <TableWrapper style={styles.wrapper}>
-                <Rows data={tableData} flexArr={[1,1,6,1]} style={styles.row} textStyle={styles.text} />
-            </TableWrapper>
-        </Table>
+            {/* Classification table */}
+            <Table borderStyle={{ borderWidth: 0 }}>
+                
+                {/* <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} /> */}
+                <Row data={tableHead} flexArr={[1, 1, 7]} style={styles.head} textStyle={styles.text} />
+                <TableWrapper style={styles.wrapper}>
+                    <Rows data={tableData} flexArr={[1, 1, 7]} style={styles.row} textStyle={styles.text} />
+                </TableWrapper>
+            </Table>
+            </ScrollView>
     </View>
 }
