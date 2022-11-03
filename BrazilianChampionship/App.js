@@ -27,7 +27,7 @@ export default function App() {
 
 	<NavigationContainer>
 		<Stack.Navigator>
-			{/* <Stack.Screen name="asas" component={LoadingScreen} options={{title: "Loading"}}/> */}
+			{/* <Stack.Screen name="Loading" component={LoadingScreen} options={{title: "Loading"}}/> */}
 			<Stack.Screen name="ClassificationTable" component={ClassificationTable} options={{title: "Tabela"}}/>
 		</Stack.Navigator>
 	</NavigationContainer>

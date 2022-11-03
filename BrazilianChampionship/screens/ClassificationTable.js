@@ -1,20 +1,12 @@
 import { Row, Rows, Table, TableWrapper } from "react-native-table-component";
-import { Text, Image, View, ScrollView } from 'react-native';
+import { Text, Image, View, ScrollView, StyleSheet } from 'react-native';
 import { useEffect, useState } from "react";
 import SelectDropdown from 'react-native-select-dropdown'
 import reactUtils from "../services/ReactUtils";
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-
-import soccerService from '../services/SoccerService'
-import { StyleSheet } from 'react-native';
+import soccerService from '../services/SoccerService';
 
 export default function ClassificationTable() {
-
-    const [matches, setMatches] = useState([]);
-	const [name, setName] = useState(undefined);
-	const [clubs, setClubs] = useState([]);
-	let isCampeonatoBrasileiro = false;
-	const [temporadaEscolhida, setTemporadaEscolhida] = useState(isCampeonatoBrasileiro ? 2019 : '2016-17'); 
 
 	function searchMatches(temporadaEscolhida){ 
 		soccerService.searchMatches(temporadaEscolhida, 'en').then((response)=>{
@@ -25,7 +17,7 @@ export default function ClassificationTable() {
 			}
 			setName(response["name"]);
 		},(error)=>{
-			alert('Deu ruim na busca por jogos chefia: ', error);
+			alert('Deu ruim na busca por jogos, chefia: ', error);
 		})
 	}
 
@@ -33,33 +25,43 @@ export default function ClassificationTable() {
 		soccerService.searchClubs(temporadaEscolhida, 'en').then((response)=>{
 			setClubs(response["clubs"]);
 		},(error)=>{
-			alert('Deu ruim na busca por times chefia: ', error);
+			alert('Deu ruim na busca por times, chefia: ', error);
 		})
 	}
 
-
-
-
-    const numberOfRounds = 2 * (clubs.length - 1); // If there is 20 clubs, then there is 38 rounds.
-    const allSeasons = isCampeonatoBrasileiro ? reactUtils.range(2019, 2020, 1) : reactUtils.rangeMidSeason(2004, 2020, 1);
+    let isCampeonatoBrasileiro = false;
+    const numberOfRounds = 38; // If there is 20 clubs, then there is 38 rounds.
+    const allSeasons = isCampeonatoBrasileiro ? reactUtils.range(2019, 2020, 1) : reactUtils.rangeMidSeason(2010, 2017, 1);
     const allRounds = reactUtils.range(1, numberOfRounds, 1);
 
     const tableHead = ['Pos', undefined ,'Time', 'Pts', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG'];   
     const [tableData, setTableData] = useState([]);
     
     const [rodadaEscolhida, setRodadaEscolhida] = useState(numberOfRounds); 
+    const [temporadaEscolhida, setTemporadaEscolhida] = useState(allSeasons[0]); 
 
-    // useEffect with a empty list as 2nd arg works like a "constructor"
+    const [matches, setMatches] = useState([]);
+	const [name, setName] = useState(undefined);
+	const [clubs, setClubs] = useState([]);
+	
+
     useEffect(() => {
-        
         searchClubs(temporadaEscolhida);
 		searchMatches(temporadaEscolhida);
-		
-        setRodadaEscolhida(2 * (clubs.length - 1));
-        
-        onUpdateTableWithSeason(temporadaEscolhida);
-        onUpdateTable(2 * (clubs.length - 1));
 	}, [])
+
+    useEffect(() => {
+        searchClubs(temporadaEscolhida);
+		searchMatches(temporadaEscolhida);
+
+        onAtualizar(temporadaEscolhida, rodadaEscolhida);
+	}, [temporadaEscolhida, rodadaEscolhida])
+
+    useEffect(() => {
+        setRodadaEscolhida(2 * (clubs.length - 1));
+        onAtualizar(temporadaEscolhida, rodadaEscolhida);
+	}, [matches, name, clubs])
+
 
     function buildClassificationTable(){
         let tabelaInicializada = [];
@@ -90,10 +92,10 @@ export default function ClassificationTable() {
             if(isCampeonatoBrasileiro){
                 jogosRodadaN = matches.filter(match => match.round === "Rodada " + rodada );
             } else {
-                jogosRodadaN = matches.filter(match => match.name === "Matchday " + rodada )[0].matches;
+                jogosRodadaN = matches.filter(match => match?.name === "Matchday " + rodada )[0]?.matches;
             }
             
-            jogosRodadaN.forEach(jogo => {
+            jogosRodadaN?.forEach(jogo => {
                 let placarMandate = jogo.score.ft[0];
                 let placarVisitante = jogo.score.ft[1];
 
@@ -154,17 +156,11 @@ export default function ClassificationTable() {
 		return <Image style={{width: 25, height: 25}} source={require('../imgs/sao-paulo.png')}/>
 	}
 
-    function onUpdateTableWithSeason(temporadaSelecionada){
-        searchMatches(temporadaSelecionada);
-        searchClubs(temporadaSelecionada);
+    function onAtualizar(temporadaSelecionada, rodadaSelecionada){
         
-        onUpdateTable(numberOfRounds);
-    }
-
-    function onUpdateTable(rodadaSelecionada){
-        setRodadaEscolhida(rodadaSelecionada);
         let tabelaInicializada = buildClassificationTable();
         let tabelaAtualizada = updateClassificationTableUntilNthRound(rodadaSelecionada, tabelaInicializada);
+        
         jsonArray2Table(tabelaAtualizada);
     }
 
@@ -176,7 +172,7 @@ export default function ClassificationTable() {
                 <Text style={styles.selectSeasonTitle}>Temporada: </Text>
                 <SelectDropdown buttonStyle={styles.selectSeason}
                     data={allSeasons}
-                    onSelect={onUpdateTableWithSeason}
+                    onSelect={setTemporadaEscolhida}
                     defaultButtonText={temporadaEscolhida}
                     buttonTextAfterSelection={(selectedItem, index) => {
                         // text represented after item is selected
@@ -199,7 +195,7 @@ export default function ClassificationTable() {
                 <Text style={styles.selectRoundTitle}>Rodada: </Text>
                 <SelectDropdown buttonStyle={styles.selectRound}
                     data={allRounds}
-                    onSelect={onUpdateTable}
+                    onSelect={setRodadaEscolhida}
                     defaultValue={numberOfRounds}
                     buttonTextAfterSelection={(selectedItem, index) => {
                         // text represented after item is selected
