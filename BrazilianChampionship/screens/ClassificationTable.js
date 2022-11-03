@@ -5,7 +5,40 @@ import SelectDropdown from 'react-native-select-dropdown'
 import reactUtils from "../services/ReactUtils";
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-export default function ClassificationTable({matches, clubs, searchClubs, name, temporadaEscolhida, searchMatches, styles, isCampeonatoBrasileiro}) {
+import soccerService from '../services/SoccerService'
+import { StyleSheet } from 'react-native';
+
+export default function ClassificationTable() {
+
+    const [matches, setMatches] = useState([]);
+	const [name, setName] = useState(undefined);
+	const [clubs, setClubs] = useState([]);
+	let isCampeonatoBrasileiro = false;
+	const [temporadaEscolhida, setTemporadaEscolhida] = useState(isCampeonatoBrasileiro ? 2019 : '2016-17'); 
+
+	function searchMatches(temporadaEscolhida){ 
+		soccerService.searchMatches(temporadaEscolhida, 'en').then((response)=>{
+			if(isCampeonatoBrasileiro){
+				setMatches(response["matches"]);
+			} else {
+				setMatches(response["rounds"]);
+			}
+			setName(response["name"]);
+		},(error)=>{
+			alert('Deu ruim na busca por jogos chefia: ', error);
+		})
+	}
+
+	function searchClubs(temporadaEscolhida){ 
+		soccerService.searchClubs(temporadaEscolhida, 'en').then((response)=>{
+			setClubs(response["clubs"]);
+		},(error)=>{
+			alert('Deu ruim na busca por times chefia: ', error);
+		})
+	}
+
+
+
 
     const numberOfRounds = 2 * (clubs.length - 1); // If there is 20 clubs, then there is 38 rounds.
     const allSeasons = isCampeonatoBrasileiro ? reactUtils.range(2019, 2020, 1) : reactUtils.rangeMidSeason(2004, 2020, 1);
@@ -197,6 +230,75 @@ export default function ClassificationTable({matches, clubs, searchClubs, name, 
                     <Rows data={tableData} flexArr={[1, 1, 7]} style={styles.row} textStyle={styles.text} />
                 </TableWrapper>
             </Table>
-            </ScrollView>
+        </ScrollView>
     </View>
 }
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		paddingTop: 50,
+	},
+	head: {  
+		height: 40, 
+		backgroundColor: '#f1f8ff',
+	},
+	wrapper: { 
+		flexDirection: 'row',
+	},
+	title: { 
+		flex: 1, 
+		padding: 2,
+		fontSize: 26,
+		paddingBottom: 5,
+		textAlign: 'center',
+		backgroundColor: '#145A32',
+		color: '#FDFEFE'
+	},
+	selectSeasonTitle: { 
+		textAlign: 'center',
+		backgroundColor: '#145A32',
+		color: '#FDFEFE'
+	},
+	selectRoundTitle: { 
+		textAlign: 'center',
+		backgroundColor: '#145A32',
+		color: '#FDFEFE'
+	},
+	seasonAndRoundTitle: { 
+		flex: 1, 
+		padding: 2,
+		backgroundColor: '#145A32',
+		color: '#FDFEFE',
+		display:'flex', 
+		flexDirection:'row',
+	},
+	row: {  
+		height: 28,  
+	},
+	text: { 
+		textAlign: 'center',
+	},
+	selectSeason: {
+		height: '100%', 
+		width : '35%', 
+		alignItems: 'center',
+		backgroundColor: '#FFF',
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: '#444',
+		marginLeft: 50
+	},
+	selectRound: {
+		height: '100%', 
+		width : '20%', 
+		alignItems: 'center',
+		backgroundColor: '#FFF',
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: '#444',
+	},
+	dropdown1DropdownStyle: {
+		backgroundColor: '#EFEFEF'
+	},
+});
