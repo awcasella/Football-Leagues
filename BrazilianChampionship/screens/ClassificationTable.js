@@ -1,27 +1,24 @@
 import { Row, Rows, Table, TableWrapper } from "react-native-table-component";
-import { Text, Image } from 'react-native';
+import { Text, Image, View } from 'react-native';
 import { useEffect, useState } from "react";
+import SelectDropdown from 'react-native-select-dropdown'
+import reactUtils from "../services/ReactUtils";
 
-export default function ClassificationTable({matches, clubs, name, styles}) {
+export default function ClassificationTable({matches, clubs, searchClubs, name, temporadaEscolhida, setTemporadaEscolhida, searchMatches, styles}) {
 
-    const [tabela, setTabela] = useState([]);
-    const [tableHead, setTableHead] = useState(['Pos', undefined ,'Time', 'Pts', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG']);   
+    const numberOfRounds = 2 * (clubs.length - 1); // If there is 20 clubs, then there is 38 rounds.
+    const allSeasons = reactUtils.range(2019, 2020, 1);
+    const allRounds = reactUtils.range(1, numberOfRounds, 1);
+
+    const tableHead = ['Pos', undefined ,'Time', 'Pts', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG'];   
     const [tableData, setTableData] = useState([]);
-    const rodadaAtual = 38;
-    const [deveAtualizarTabela, setDeveAtualizarTabela] = useState(false);
-    useEffect(() => {
-        buildClassificationTable();
-    }, []);
+    
+    const [rodadaEscolhida, setRodadaEscolhida] = useState(numberOfRounds); 
 
+    // useEffect with a empty list as 2nd arg works like a "constructor"
     useEffect(() => {
-        if(deveAtualizarTabela){
-            updateClassificationTableUntilNthRound(rodadaAtual);
-            setDeveAtualizarTabela(false);
-        } else {
-            jsonArray2Table();
-            setDeveAtualizarTabela(true);
-        }
-    }, [tabela]);
+        onUpdateTableWithSeason(2019);
+    }, []);
     
     function buildClassificationTable(){
         let tabelaInicializada = [];
@@ -39,16 +36,15 @@ export default function ClassificationTable({matches, clubs, name, styles}) {
             };
         });
 
-        setTabela(tabelaInicializada);
+        return tabelaInicializada;
     }
 
-    function updateClassificationTableUntilNthRound(round){
-        let tabelaAtualizada = tabela;
+    function updateClassificationTableUntilNthRound(round, tabelaAtualizada){
         if(!tabelaAtualizada){
             return;
         }
         for(let rodada = 1; rodada <= round; rodada++){
-            let jogosRodadaN = matches.filter(match => match.round === "Rodada "+rodada );
+            let jogosRodadaN = matches.filter(match => match.round === "Rodada " + rodada );
             jogosRodadaN.forEach(jogo => {
                 let placarMandate = jogo.score.ft[0];
                 let placarVisitante = jogo.score.ft[1];
@@ -92,19 +88,17 @@ export default function ClassificationTable({matches, clubs, name, styles}) {
             });
         }
 
-        setTabela(tabelaAtualizada);
-        // console.log(tabelaAtualizada);
+        return tabelaAtualizada;
     }
 
-    function jsonArray2Table(){
-        let tabelaAtualizadaJsonArray = tabela;
+    function jsonArray2Table(tabelaAtualizadaJsonArray){
         tabelaAtualizadaJsonArray.sort((a, b) => {return parseInt(b.pts, 10) - parseInt(a.pts, 10)});
 
         let tabelaAtualizadaAsTable = [];
         tabelaAtualizadaJsonArray.forEach((time, index) => {
             tabelaAtualizadaAsTable[index] = [index+1, elementImage('../imgs/sao-paulo.png'), time.nome, time.pts, time.jogos, time.vitorias, time.empates, time.derrotas, time.golsPro, time.golsContra, time.saldoGols];
         });
-
+        
         setTableData(tabelaAtualizadaAsTable);
     }
 
@@ -112,13 +106,66 @@ export default function ClassificationTable({matches, clubs, name, styles}) {
 		return <Image style={{width: 25, height: 25}} source={require('../imgs/sao-paulo.png')}/>
 	}
 
-    return <Table borderStyle={{ borderWidth: 0 }}>
-        <Text>Temporada 2019</Text>
-        <Text>Rodada {rodadaAtual}</Text>
-        {/* <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} /> */}
-        <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} />
-        <TableWrapper style={styles.wrapper}>
-            <Rows data={tableData} flexArr={[1,1,6,1]} style={styles.row} textStyle={styles.text} />
-        </TableWrapper>
-    </Table>
+    function onUpdateTableWithSeason(temporadaSelecionada){
+        searchMatches(temporadaSelecionada);
+        searchClubs(temporadaSelecionada);
+        onUpdateTable(rodadaEscolhida);
+    }
+
+    function onUpdateTable(rodadaSelecionada){
+        let tabelaInicializada = buildClassificationTable();
+        let tabelaAtualizada = updateClassificationTableUntilNthRound(rodadaSelecionada, tabelaInicializada);
+        jsonArray2Table(tabelaAtualizada);
+    }
+
+    return <View>
+        <Text>{name}</Text>
+        <View style={{display:'flex', flexDirection:'row'}}>
+            {/* Select season */}
+            <Text>Temporada: </Text>
+            <SelectDropdown buttonStyle={styles.selectSeason}
+                data={allSeasons}
+                onSelect={onUpdateTableWithSeason}
+                defaultButtonText={temporadaEscolhida}
+                buttonTextAfterSelection={(selectedItem, index) => {
+                    // text represented after item is selected
+                    // if data array is an array of objects then return selectedItem.property to render after item is selected
+                    return selectedItem
+                }}
+                rowTextForSelection={(item, index) => {
+                    // text represented for each item in dropdown
+                    // if data array is an array of objects then return item.property to represent item in dropdown
+                    return item
+                }}
+            />
+
+            {/* Select round */}
+            <Text>Rodada: </Text>
+            <SelectDropdown buttonStyle={styles.selectRound}
+                data={allRounds}
+                onSelect={onUpdateTable}
+                defaultButtonText={numberOfRounds}
+                buttonTextAfterSelection={(selectedItem, index) => {
+                    // text represented after item is selected
+                    // if data array is an array of objects then return selectedItem.property to render after item is selected
+                    return selectedItem
+                }}
+                rowTextForSelection={(item, index) => {
+                    // text represented for each item in dropdown
+                    // if data array is an array of objects then return item.property to represent item in dropdown
+                    return item
+                }}
+            />
+        </View>
+
+        {/* Classification table */}
+        <Table borderStyle={{ borderWidth: 0 }}>
+            
+            {/* <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} /> */}
+            <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} />
+            <TableWrapper style={styles.wrapper}>
+                <Rows data={tableData} flexArr={[1,1,6,1]} style={styles.row} textStyle={styles.text} />
+            </TableWrapper>
+        </Table>
+    </View>
 }
