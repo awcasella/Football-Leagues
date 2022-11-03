@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "BrazilianChampionship",
+    "slug": "BrazilianChampionship",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
