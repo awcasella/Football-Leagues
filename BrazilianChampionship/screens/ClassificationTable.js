@@ -58,7 +58,6 @@ export default function ClassificationTable({navigation, route}) {
 	}, [temporadaEscolhida, rodadaEscolhida])
 
     useEffect(() => {
-        // setRodadaEscolhida(2 * (clubs.length - 1));
         onAtualizar(temporadaEscolhida, rodadaEscolhida);
 	}, [matches, name, clubs])
 
