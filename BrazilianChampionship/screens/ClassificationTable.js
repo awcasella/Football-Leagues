@@ -6,15 +6,11 @@ import reactUtils from "../services/ReactUtils";
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import soccerService from '../services/SoccerService';
 
-export default function ClassificationTable() {
+export default function ClassificationTable({navigation, route}) {
 
 	function searchMatches(temporadaEscolhida){ 
-		soccerService.searchMatches(temporadaEscolhida, 'en').then((response)=>{
-			if(isCampeonatoBrasileiro){
-				setMatches(response["matches"]);
-			} else {
-				setMatches(response["rounds"]);
-			}
+		soccerService.searchMatches(temporadaEscolhida, siglaPais, divisaoLiga).then((response)=>{
+            setMatches(reactUtils.arrumarDadosPorCampeonato(response, siglaPais));
 			setName(response["name"]);
 		},(error)=>{
 			alert('Deu ruim na busca por jogos, chefia: ', error);
@@ -22,19 +18,23 @@ export default function ClassificationTable() {
 	}
 
 	function searchClubs(temporadaEscolhida){ 
-		soccerService.searchClubs(temporadaEscolhida, 'en').then((response)=>{
+		soccerService.searchClubs(temporadaEscolhida, siglaPais, divisaoLiga).then((response)=>{
 			setClubs(response["clubs"]);
 		},(error)=>{
 			alert('Deu ruim na busca por times, chefia: ', error);
 		})
 	}
 
-    let isCampeonatoBrasileiro = false;
-    const numberOfRounds = 38; // If there is 20 clubs, then there is 38 rounds.
-    const allSeasons = isCampeonatoBrasileiro ? reactUtils.range(2019, 2020, 1) : reactUtils.rangeMidSeason(2010, 2017, 1);
-    const allRounds = reactUtils.range(1, numberOfRounds, 1);
 
-    const tableHead = ['Pos', undefined ,'Time', 'Pts', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG'];   
+    let backgroundColorCampeonato = route.params.backgroundColorCampeonato;
+    let siglaPais = route.params.siglaPais;
+    let divisaoLiga = route.params.divisaoLiga;
+    const numberOfRounds = route.params.numberOfRounds; // If there is 20 clubs, then there is 38 rounds.
+    const allSeasons = route.params.allSeasons;
+    const allRounds = route.params.allRounds;
+
+    
+    const tableHead = ['Pos', 'Time', 'Pts', 'J', 'V', 'E', 'D', 'GP', 'GC', 'SG'];   
     const [tableData, setTableData] = useState([]);
     
     const [rodadaEscolhida, setRodadaEscolhida] = useState(numberOfRounds); 
@@ -58,7 +58,7 @@ export default function ClassificationTable() {
 	}, [temporadaEscolhida, rodadaEscolhida])
 
     useEffect(() => {
-        setRodadaEscolhida(2 * (clubs.length - 1));
+        // setRodadaEscolhida(2 * (clubs.length - 1));
         onAtualizar(temporadaEscolhida, rodadaEscolhida);
 	}, [matches, name, clubs])
 
@@ -89,11 +89,7 @@ export default function ClassificationTable() {
         for(let rodada = 1; rodada <= round; rodada++){
             let jogosRodadaN = [];
             
-            if(isCampeonatoBrasileiro){
-                jogosRodadaN = matches.filter(match => match.round === "Rodada " + rodada );
-            } else {
-                jogosRodadaN = matches.filter(match => match?.name === "Matchday " + rodada )[0]?.matches;
-            }
+            jogosRodadaN = matches?.filter(match => match?.name === "Rodada " + rodada)[0]?.matches;
             
             jogosRodadaN?.forEach(jogo => {
                 let placarMandate = jogo.score.ft[0];
@@ -146,7 +142,7 @@ export default function ClassificationTable() {
 
         let tabelaAtualizadaAsTable = [];
         tabelaAtualizadaJsonArray.forEach((time, index) => {
-            tabelaAtualizadaAsTable[index] = [index+1, elementImage('../imgs/sao-paulo.png'), time.nome, time.pts, time.jogos, time.vitorias, time.empates, time.derrotas, time.golsPro, time.golsContra, time.saldoGols];
+            tabelaAtualizadaAsTable[index] = [index+1, time.nome, time.pts, time.jogos, time.vitorias, time.empates, time.derrotas, time.golsPro, time.golsContra, time.saldoGols];
         });
         
         setTableData(tabelaAtualizadaAsTable);
@@ -166,10 +162,10 @@ export default function ClassificationTable() {
 
     return <View>
         <ScrollView>
-            <Text style={styles.title}>{name}</Text>
-            <View style={styles.seasonAndRoundTitle}>
+            <Text style={[styles.title, {backgroundColor: backgroundColorCampeonato}]}>{name}</Text>
+            <View style={[styles.seasonAndRoundTitle, {backgroundColor: backgroundColorCampeonato}]}>
                 {/* Select season */}
-                <Text style={styles.selectSeasonTitle}>Temporada: </Text>
+                <Text style={[styles.selectSeasonTitle, {backgroundColor: backgroundColorCampeonato}]}>Temporada: </Text>
                 <SelectDropdown buttonStyle={styles.selectSeason}
                     data={allSeasons}
                     onSelect={setTemporadaEscolhida}
@@ -192,7 +188,7 @@ export default function ClassificationTable() {
                 />
 
                 {/* Select round */}
-                <Text style={styles.selectRoundTitle}>Rodada: </Text>
+                <Text style={[styles.selectRoundTitle, {backgroundColor: backgroundColorCampeonato}]}>Rodada: </Text>
                 <SelectDropdown buttonStyle={styles.selectRound}
                     data={allRounds}
                     onSelect={setRodadaEscolhida}
@@ -221,9 +217,9 @@ export default function ClassificationTable() {
             <Table borderStyle={{ borderWidth: 0 }}>
                 
                 {/* <Row data={tableHead} flexArr={[1, 1, 6, 1]} style={styles.head} textStyle={styles.text} /> */}
-                <Row data={tableHead} flexArr={[1, 1, 7]} style={styles.head} textStyle={styles.text} />
+                <Row data={tableHead} flexArr={[1, 7]} style={styles.head} textStyle={styles.text} />
                 <TableWrapper style={styles.wrapper}>
-                    <Rows data={tableData} flexArr={[1, 1, 7]} style={styles.row} textStyle={styles.text} />
+                    <Rows data={tableData} flexArr={[1, 7]} style={styles.row} textStyle={styles.text} />
                 </TableWrapper>
             </Table>
         </ScrollView>
@@ -245,26 +241,22 @@ const styles = StyleSheet.create({
 	title: { 
 		flex: 1, 
 		padding: 2,
-		fontSize: 26,
+		fontSize: 25,
 		paddingBottom: 5,
 		textAlign: 'center',
-		backgroundColor: '#145A32',
 		color: '#FDFEFE'
 	},
 	selectSeasonTitle: { 
 		textAlign: 'center',
-		backgroundColor: '#145A32',
 		color: '#FDFEFE'
 	},
 	selectRoundTitle: { 
 		textAlign: 'center',
-		backgroundColor: '#145A32',
 		color: '#FDFEFE'
 	},
 	seasonAndRoundTitle: { 
 		flex: 1, 
 		padding: 2,
-		backgroundColor: '#145A32',
 		color: '#FDFEFE',
 		display:'flex', 
 		flexDirection:'row',
