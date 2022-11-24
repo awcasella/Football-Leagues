@@ -1,4 +1,9 @@
 # Football Leagues
+
+This app is build with **React Native** and **Expo**.
+
+# About this Project
+
 App built with react native to look for 6 major football (or soccer) national leagues in the world:
 
 - Brazil: Campeonato Brasileiro
@@ -11,10 +16,6 @@ App built with react native to look for 6 major football (or soccer) national le
 This app provides information about classification of all teams at a specific season and round. This app consumes the API provided by the guys of https://github.com/openfootball
 
 ![](./FootballLeagues.gif)
-
-# About this Project
-
-This app is build with **React Native** and **Expo**.
 
 # Getting Started
 
