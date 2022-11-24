@@ -1,13 +1,53 @@
-# Football-Leagues
+# Football Leagues
+App built with react native to look for 6 major football (or soccer) national leagues in the world:
 
-Table components:
-npm install react-native-table-component (https://www.nicesnippets.com/blog/how-to-create-table-component-in-react-native)
+- Brazil: Campeonato Brasileiro
+- England: Premier League
+- Germany: Bundesliga
+- Spain: La Liga
+- Italy: Seria A
+- France: Ligue 1
 
-Select components: 
-npm install react-native-select-dropdown (https://www.npmjs.com/package/react-native-select-dropdown)
+This app provides information about classification of all teams at a specific season and round. This app consumes the API provided by the guys of https://github.com/openfootball
 
-Animation at the begining:
-npm install lottie-react-native (https://lottiefiles.com/)
+![](./FootballLeagues.gif)
 
-Stack of screens:
-npm install react-native-screens react-native-safe-area-context
+# About this Project
+
+This app is build with **React Native** and **Expo**.
+
+# Getting Started
+
+**Prerequisites**
+
+To run this project, you'll need to have *npm* installed.
+
+**Installing**
+
+To install the npm, run this on terminal:
+
+	$ sudo apt install nodejs
+	$ sudo apt install npm
+	
+You also need to install expo on your system with:	
+	
+	$ npm install expo-cli --global
+	
+You can read the Expo documentation and install from [here](https://expo.dev/).
+
+After that, clone this Repository:
+
+    $ git clone https://github.com/awcasella/World-Cup-2022-Sinulator.git
+
+You need to set a virtual (emulator on Android Studio) or physical smartphone device.
+
+Change to the root directory of the project:
+    
+    $ cd Football-Leagues
+    
+And start the application with:
+
+    $ expo start
+
+**Reference**
+- Football.db. Open Public Domain Football Datasets in (Structured) Text using the (Future-Proof & Evergreen) Football.TXT Format. Gerald Bauer.  Available at: [https://github.com/openfootball](https://github.com/openfootball). Access in November, 2022.
