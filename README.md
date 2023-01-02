@@ -34,7 +34,7 @@ You also need to install expo on your system with:
 	
 	$ npm install expo-cli --global
 	
-You can read the Expo documentation and install from [here](https://expo.dev/).
+You can read the Expo documentation and installation from [here](https://expo.dev/).
 
 After that, clone this Repository:
 
@@ -45,6 +45,10 @@ You need to set a virtual (emulator on Android Studio) or physical smartphone de
 Change to the root directory of the project:
     
     $ cd Football-Leagues
+
+Install the dependencies:
+
+    $ npm install
     
 And start the application with:
 
